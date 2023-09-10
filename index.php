@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 }
 
+
 // Handle POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Implement your POST request handling logic here

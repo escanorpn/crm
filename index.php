@@ -10,10 +10,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Extract data fields from the JSON data
     $metad = isset($_GET['metad']) ? $_GET['metad'] : null;
-    $object = $data['object'];
+ 
     $entry = $data['entry'][0];
     $firstChange = $entry['changes'][0];
     $value = $firstChange['value'];
+
+    
+    // Log the request details and data to a file
+    $logMessage = "Received POST request with metad: $metad\n";
+    $logMessage .= "Data: " . json_encode($data) . "\n"; // Include the $data variable
+    $logMessage .= "Variable metad: $metad\n"; // Include the $metad variable
+    
+    // Specify the log file path
+    $logFilePath = 'log.txt';
+    
+    // Open the log file for appending
+    $logFile = fopen($logFilePath, 'a');
+    
+    if ($logFile) {
+        // Write the log message to the file
+        fwrite($logFile, $logMessage);
+        
+        // Close the log file
+        fclose($logFile);
+    } else {
+        // Handle any errors that occur when opening the log file
+        error_log("Error opening log file $logFilePath");
+    }
 
     // Extract messaging product, metadata, and contacts
     $messagingProduct = $value['messaging_product'];

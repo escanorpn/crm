@@ -11,12 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Handle GET request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $VERIFY_TOKEN = 'abcd';
-    $mode = $_GET['hub_mode'];
-    $challenge = $_GET['hub_challenge'];
-    $verifyToken = $_GET['hub_verify_token'];
+    $mode = isset($_GET['hub_mode']) ? $_GET['hub_mode'] : null;
+    $challenge = isset($_GET['hub_challenge']) ? $_GET['hub_challenge'] : null;
+    $verifyToken = isset($_GET['hub_verify_token']) ? $_GET['hub_verify_token'] : null;
 
     if ($mode === 'subscribe' && $verifyToken === $VERIFY_TOKEN) {
-        echo $challenge;
+        // echo $challenge;
         http_response_code(200);
         exit();
     } else {
@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         exit();
     }
 }
+
 
 // Handle other CRUD operations as needed (e.g., DELETE)
 

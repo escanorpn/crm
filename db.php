@@ -7,8 +7,8 @@ ini_set('display_errors', 1);
 
 		
 		$servername="localhost";
-		$username="lmglobal_peter";
-		$password="lmglobal_peter";
+		$username="lmglobal_lmglobal";
+		$password="lmglobal_lmglobal";
 		$dbname="lmglobal_crm";
 		
 

@@ -2,7 +2,7 @@
 require_once 'cors.php';  
 require_once 'db.php';  
 $response = array();  
-set_error_handler("customError");
+// set_error_handler("customError");
 
 // Handle POST request to create or update data
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

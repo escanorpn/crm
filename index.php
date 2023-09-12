@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $verifyToken = isset($_GET['hub_verify_token']) ? $_GET['hub_verify_token'] : null;
 
     if ($mode === 'subscribe' && $verifyToken === $VERIFY_TOKEN) {
-        // echo $challenge;
+        echo $mode,$challenge,$verifyToken ;
         http_response_code(200);
         exit();
     } else {

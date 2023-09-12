@@ -2,12 +2,12 @@
 require_once 'cors.php';  
 require_once 'db.php';  
 $response = array();  
-// set_error_handler("customError");
 
 // Handle POST request to create or update data
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-   
+    // Your POST request handling code here
 }
+
 // Handle GET request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $VERIFY_TOKEN = 'abcd';
@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $verifyToken = isset($_GET['hub_verify_token']) ? $_GET['hub_verify_token'] : null;
 
     if ($mode === 'subscribe' && $verifyToken === $VERIFY_TOKEN) {
-        echo $mode,$challenge,$verifyToken ;
         http_response_code(200);
+        echo $challenge;
         exit();
     } else {
         http_response_code(403);
@@ -26,8 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 }
 
-
 // Handle other CRUD operations as needed (e.g., DELETE)
 
 $conn->close();
+
 ?>

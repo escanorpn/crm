@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
 
                         // Query to retrieve data from the database
-                        $sql = "SELECT verificationCode, status, Token FROM whatsapp WHERE selectedAppID = '-$selectedAppID'";
+                        $sql = "SELECT verificationCode, status, Token FROM whatsapp WHERE selectedAppID = '$selectedAppID'";
                         $result = $conn->query($sql);
 
                         if ($result->num_rows > 0) {
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $Token = $row['Token'];
                             }
                             
-  echo json_encode(array('sendBotResponsemessage' => $Token.$sql));
+                            echo json_encode(array('sendBotResponsemessage' => $Token.$sql));
 
                             // Handle further processing based on your logic
 

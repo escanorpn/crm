@@ -1,29 +1,57 @@
 <?php
-function handleCommonGreetings($Token, $messageText, $recipientWAID, $metad, $profileName) {
+require_once 'cors.php';  
+require_once 'db.php';  
+
+function handleCommonGreetings($Token, $messageText, $recipientWAID, $selectedAppID , $profileName) {
     $commonGreetings = ['hi', 'hello', 'sasa']; // Add more common greetings as needed
 
     if (in_array(strtolower($messageText), $commonGreetings)) {
         $responseMessage = "Hi $profileName, how can I help you?";
         sendBotResponse($Token, $responseMessage, $recipientWAID);
     } else {
-        handleMenuOptions($Token, $messageText, $recipientWAID, $metad, $profileName);
+        handleMenuOptions($Token, $messageText, $recipientWAID, $selectedAppID , $profileName);
+   
     }
 }
-function handleMenuOptions($Token, $messageText, $recipientWAID, $metad, $profileName) {
+function handleMenuOptions($Token, $messageText, $recipientWAID, $selectedAppID, $profileName) {
+    // Define responses for common greetings and questions
+    $commonResponses = [
+        'hi' => "Hi $profileName, how can I help you?",
+        'hello' => "Hello $profileName! How can I assist you today?",
+        'how are you' => "I'm just a bot, but I'm here to help. What can I assist you with?",
+        // Add more common greetings and responses as needed
+    ];
+
+    // Check if the message is a common greeting or question
+    $messageTextLower = strtolower($messageText);
+    if (isset($commonResponses[$messageTextLower])) {
+        $responseMessage = $commonResponses[$messageTextLower];
+        sendBotResponse($Token, $responseMessage, $recipientWAID);
+        return; // Exit the function after sending the response
+    }
+
+    // Handle other menu options
     if ($messageText === '1') {
         // Query to retrieve messages from the database (adjust this query according to your database schema)
-        $sql = "SELECT messages FROM webhook_data WHERE metad = '$metad' AND recipientWAID = '$recipientWAID'";
+        $sql = "SELECT messages FROM webhook_data WHERE selectedAppID = '$selectedAppID' AND recipientWAID = '$recipientWAID' ORDER BY id DESC LIMIT 1";
         $result = $conn->query($sql);
-
+        
         if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $messages = $row['messages'];
-            }
-            
+            $row = $result->fetch_assoc();
+            $messages = $row['messages'];
+     
+
             // Process the messages as needed
-            handleTicketCreation($Token, $messages, $recipientWAID, $metad, $profileName);
+            handleTicketCreation($Token, $messages, $recipientWAID, $selectedAppID, $profileName);
+            createTicket($recipientWAID, $profileName,$messages);
+            // Update the last message in the database
+            $lastMessage = $messageText; // Store the current message as the last message
+            $updateSql = "UPDATE webhook_data SET messages = '$lastMessage' WHERE selectedAppID = '$selectedAppID' AND recipientWAID = '$recipientWAID'";
+            $conn->query($updateSql);
         } else {
             echo 'No messages found for the specified recipientWAID.';
+            $responseMessage="I din't understand, what can i help you with?";
+            sendBotResponse($Token, $responseMessage, $recipientWAID);
         }
     } elseif ($messageText === '2') {
         $responseMessage = "Okay, please state your query:";
@@ -34,17 +62,19 @@ function handleMenuOptions($Token, $messageText, $recipientWAID, $metad, $profil
     } else {
         $responseMessage = "Would you like me to log the issue\n*$messageText*?\n1: Yes\n2: Enter new Query\n3: Never mind";
         sendBotResponse($Token, $responseMessage, $recipientWAID);
+        echo $responseMessage;
     }
 }
-function handleTicketCreation($conn, $Token, $messageText, $recipientWAID, $metad, $profileName) {
+
+function handleTicketCreation($conn, $Token, $messageText, $recipientWAID, $selectedAppID , $profileName) {
     // Define your SQL query to insert ticket data (adjust table and column names)
-    $sql = "INSERT INTO tickets (metad, recipientWAID, query, contact, contactName, createdAt, createdBy, status) VALUES (?, ?, ?, ?, ?, NOW(), 'whatsapp', 'open')";
+    $sql = "INSERT INTO tickets (selectedAppID , recipientWAID, query, contact, contactName, createdAt, createdBy, status) VALUES (?, ?, ?, ?, ?, NOW(), 'whatsapp', 'open')";
 
     // Prepare the SQL statement
     $stmt = $conn->prepare($sql);
 
     // Bind parameters
-    $stmt->bind_param("sssss", $metad, $recipientWAID, $messageText, $recipientWAID, $profileName);
+    $stmt->bind_param("sssss", $selectedAppID , $recipientWAID, $messageText, $recipientWAID, $profileName);
 
     // Execute the SQL statement
     if ($stmt->execute()) {
@@ -60,74 +90,123 @@ function handleTicketCreation($conn, $Token, $messageText, $recipientWAID, $meta
     // Close the prepared statement
     $stmt->close();
 }
-
-function sendBotResponse($conn, $token, $message, $recipientWAID, $code = 1, $userData = []) {
+function createTicket($contact, $displayName,$mQuery){
+    global $conn;
+    $secret = My_SECRETE;
+    $curl = curl_init();
+    $tUrl= TURL;
+    // Define the cURL options
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $tUrl,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => json_encode(array(
+          "assigned" => "",
+          "contact" => $contact,
+          "createdBy" => array(
+            "displayName" => $displayName,
+            "uid" => null
+          ),
+          "query" => $mQuery,
+          "status" => "open",
+        )),
+        CURLOPT_HTTPHEADER => array(
+          'Content-Type: application/json',
+          "Authorization: Bearer $secret"
+        ),
+      ));
+      echo $secret;
+      // Execute the cURL request
+      $response = curl_exec($curl);
+      
+      // Check for errors and handle the response as needed
+      if (curl_errno($curl)) {
+        // echo 'Curl error: ' . curl_error($curl);
+        // echo "Error sending bot response. Status code:".  curl_error($curl);
+        // $cError= curl_error($curl);
+        // // Log the error and the received message to the MySQL database (adjust the SQL query)
+        // $errorQuery = "INSERT INTO webhook_errors (timestamp, error, message, recipientWAID) VALUES (NOW(), 'Error sending bot response. Status code:', '$cError','$message', '$recipientWAID')";
+        // if ($conn->query($errorQuery) === false) {
+        //     echo "Error logging error: " . $conn->error;
+        // }
+      }
+}
+function sendBotResponse( $token, $message, $recipientWAID, $code = 1, $userData = []) {
+    global $conn;
     $version = 'v17.0';
     $phoneNumberID = '118868224638325';
 
-    $payload = [
-        'messaging_product' => 'whatsapp',
-        'recipient_type' => 'individual',
-        'to' => $recipientWAID,
-        'type' => 'text',
-        'text' => [
-            'preview_url' => false,
-            'body' => $message
-        ]
-    ];
-
-    $postData = json_encode($payload);
-
-    $options = [
-        'http' => [
-            'method' => 'POST',
-            'header' => "Authorization: Bearer $token\r\n" .
-                "Content-Type: application/json\r\n",
-            'content' => $postData
-        ]
-    ];
-
-    $context = stream_context_create($options);
     $url = "https://graph.facebook.com/$version/$phoneNumberID/messages";
 
-    $response = file_get_contents($url, false, $context);
-
-    if ($response !== false) {
-        $httpResponse = parse_http_response($http_response_header);
-
-        if ($httpResponse['response_code'] === 200) {
-            echo 'Bot response sent:', $httpResponse['response_code'];
-
-            if ($code == 2) {
-                // Update the status to verified in the MySQL database (adjust the SQL query)
-                $statusQuery = "UPDATE whatsapp SET status = 'verified' WHERE metad = '{$userData['metad']}'";
-                if ($conn->query($statusQuery) === true) {
-                    $responseMessage = "The account $recipientWAID has been successfully verified. You can now use it to send and receive data";
-                    sendBotResponse($conn, $token, $responseMessage, $recipientWAID);
-
-                    // Log other updates to the MySQL database as needed
-                } else {
-                    echo "Error updating status: " . $conn->error;
-                }
-            }
+    $curl = curl_init();
+// Define the cURL options
+curl_setopt_array($curl, array(
+    CURLOPT_URL => $url,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_ENCODING => '',
+    CURLOPT_MAXREDIRS => 10,
+    CURLOPT_TIMEOUT => 0,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+    CURLOPT_CUSTOMREQUEST => 'POST',
+    CURLOPT_POSTFIELDS => json_encode(array(
+      "messaging_product" => "whatsapp",
+      "recipient_type" => "individual",
+      "to" => $recipientWAID,
+      "type" => "text",
+      "text" => array(
+        "preview_url" => false,
+        "body" => $message
+      )
+    )),
+    CURLOPT_HTTPHEADER => array(
+      'Content-Type: application/json',
+      "Authorization: Bearer $token"
+    ),
+  ));
+  
+  // Execute the cURL request
+  $response = curl_exec($curl);
+  
+  // Check for errors and handle the response as needed
+  if (curl_errno($curl)) {
+    echo 'Curl error: ' . curl_error($curl);
+    echo "Error sending bot response. Status code:".  curl_error($curl);
+$cError= curl_error($curl);
+    // Log the error and the received message to the MySQL database (adjust the SQL query)
+    $errorQuery = "INSERT INTO webhook_errors (timestamp, error, message, recipientWAID) VALUES (NOW(), 'Error sending bot response. Status code:', '$cError','$message', '$recipientWAID')";
+    if ($conn->query($errorQuery) === false) {
+        echo "Error logging error: " . $conn->error;
+    }
+  } else {
+    // Handle the response here
+    if ($code == 2) {
+        
+    $selectedAppID = $userData['selectedAppID'];
+    echo "selectedAppID: " . $selectedAppID;
+    //    echo json_encode($userData);
+        // Update the status to verified in the MySQL database (adjust the SQL query)
+        $statusQuery = "UPDATE whatsapp SET status = 'verified' WHERE selectedAppID  = '{$selectedAppID}'";
+        if ($conn->query($statusQuery) === true) {
+            $responseMessage = "The account $recipientWAID has been successfully verified. You can now use it to send and receive data";
+            sendBotResponse( $token, $responseMessage, $recipientWAID);
+echo $statusQuery;
+            // Log other updates to the MySQL database as needed
         } else {
-            echo "Error sending bot response. Status code: {$httpResponse['response_code']}";
-
-            // Log the error and the received message to the MySQL database (adjust the SQL query)
-            $errorQuery = "INSERT INTO webhook_errors (timestamp, error, message, recipientWAID) VALUES (NOW(), 'Error sending bot response. Status code: {$httpResponse['response_code']}', '$message', '$recipientWAID')";
-            if ($conn->query($errorQuery) === false) {
-                echo "Error logging error: " . $conn->error;
-            }
-        }
-    } else {
-        echo 'Error sending bot response: ' . error_get_last()['message'];
-
-        // Log the error and the received message to the MySQL database (adjust the SQL query)
-        $errorQuery = "INSERT INTO webhook_errors (timestamp, error, message, recipientWAID) VALUES (NOW(), '" . error_get_last()['message'] . "', '$message', '$recipientWAID')";
-        if ($conn->query($errorQuery) === false) {
-            echo "Error logging error: " . $conn->error;
+            echo "Error updating status: " . $conn->error;
         }
     }
+  }
+  
+  // Close the cURL session
+  curl_close($curl);
+
+   
 }
 
 // Helper function to parse HTTP response headers

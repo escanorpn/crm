@@ -19,16 +19,17 @@ if (isset($_GET['apicall'])) {
                 $phoneNumber = $data['phoneNumber'];
                 $verificationCode = $data['verificationCode'];
                 $selectedAppID = $data['selectedAppID'];
+                $path = $data['path'];
                 
                 $response['selectedAppID'] = $selectedAppID;
                 
                 // Prepare the SQL query with values
-                $query = "INSERT INTO whatsapp (Token, Phone_Number_ID, Version, status, PhoneNumber, verification_code, selectedAppID) 
-                          VALUES ('$token', '$phoneNumberId', '$version', '$status', '$phoneNumber', '$verificationCode', '$selectedAppID') 
+                $query = "INSERT INTO whatsapp (Token, phoneNumberId, Version, status, PhoneNumber, verificationCode, path, selectedAppID) 
+                          VALUES ('$token', '$phoneNumberId', '$version', '$status', '$phoneNumber', '$verificationCode', '$path', '$selectedAppID') 
                           ON DUPLICATE KEY UPDATE 
-                          Token=VALUES(Token), Phone_Number_ID=VALUES(Phone_Number_ID), 
+                          Token=VALUES(Token), phoneNumberId=VALUES(phoneNumberId), 
                           Version=VALUES(Version), status=VALUES(status), 
-                          PhoneNumber=VALUES(PhoneNumber), verification_code=VALUES(verification_code), selectedAppID=VALUES(selectedAppID)";
+                          PhoneNumber=VALUES(PhoneNumber), verificationCode=VALUES(verificationCode), path=VALUES(path), selectedAppID=VALUES(selectedAppID)";
                 
                 if ($conn->query($query)) {
                     http_response_code(200);

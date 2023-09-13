@@ -142,7 +142,6 @@ function sendBotResponse( $token, $message, $recipientWAID, $code = 1, $userData
     $phoneNumberID = '118868224638325';
 
     $url = "https://graph.facebook.com/$version/$phoneNumberID/messages";
-
     $curl = curl_init();
 // Define the cURL options
 curl_setopt_array($curl, array(
@@ -170,6 +169,7 @@ curl_setopt_array($curl, array(
     ),
   ));
   
+  echo json_encode(array('sendBotResponsemessage' => $token));
   // Execute the cURL request
   $response = curl_exec($curl);
   

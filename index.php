@@ -124,24 +124,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 handleCommonGreetings($Token, $messages, $recipientWAID, $selectedAppID , $profileName);
                     
                                 // Assuming you have already sent the response in handleCommonGreetings
+                                // echo json_encode(array('handleCommonGreetings' => $selectedAppID));
                             }
-                                               
+                             if($messages!='1'&&$messages!='2'&&$messages!='3') {
                           // SQL query to update or insert a record
-                            $query = "INSERT INTO webhook_data (selectedAppID, recipientWAID, messages)
-                            VALUES ('$selectedAppID', '$recipientWAID', '$messages')
-                            ON DUPLICATE KEY UPDATE messages = IF(messages IS NULL, '$messages', CONCAT(messages, ', ', '$messages'))";
+                          $query = "INSERT INTO webhook_data (selectedAppID, recipientWAID, messages)
+                          VALUES ('$selectedAppID', '$recipientWAID', '$messages')
+                          ON DUPLICATE KEY UPDATE messages = IF(messages IS NULL, '$messages', CONCAT(messages, ', ', '$messages'))";
 
-                            // Execute the SQL query
-                            if ($conn->query($query) === TRUE) {
-                            echo "Record updated/inserted successfully.";
-                            } else {
-                            echo "Error updating/inserting record: " . $conn->error;
-                            }
+                          // Execute the SQL query
+                          if ($conn->query($query) === TRUE) {
+                          echo "Record updated/inserted successfully.";
+                          } else {
+                          echo "Error updating/inserting record: " . $conn->error;
+                          }
+                             }                 
 
 
-                       
-                          
-                    
                         } else {
                             // Handle case where no data is found in the database
                     

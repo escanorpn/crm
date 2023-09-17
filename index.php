@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $Token = $row['Token'];
                             }
                             
-                            echo json_encode(array('sendBotResponsemessage' => $Token.$sql));
+                            // echo json_encode(array('sendBotResponsemessage' => $Token.$sql));
 
                             // Handle further processing based on your logic
 
@@ -134,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                           // Execute the SQL query
                           if ($conn->query($query) === TRUE) {
-                          echo "Record updated/inserted successfully.";
+                        //   echo "Record updated/inserted successfully.";
                           } else {
                           echo "Error updating/inserting record: " . $conn->error;
                           }

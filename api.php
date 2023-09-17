@@ -1,4 +1,5 @@
 <?php
+require_once 'helper.php';
 require_once 'cors.php';  
 require_once 'db.php';  
 $response = array();  
@@ -41,9 +42,97 @@ if (isset($_GET['apicall'])) {
                     $response['query'] = $query; // Store the executed SQL query in the response even in case of an error
                 }
             }
-            
             break;
-
+            case 'tid':
+                {
+                    if ($data) {  
+                        $tid = $data['tid'];
+                        $recipientWAID = $data['recipientWAID'];
+              
+                if (updateTicketWithTID($tid, $recipientWAID, $conn)) {
+                    echo "Ticket update successful.";
+                } else {
+                    echo "Ticket update failed.";
+                }
+                } else {  
+                    $response['error'] = true;   
+                    $response['message'] = 'bad data';  
+                }
+            }
+            break;
+            
+            case 'status':
+                {
+                    if ($data) {  
+                        $tid = $data['tid'];
+                        $status = $data['status'];
+              
+                if (updateTicketStatus($tid, $status, $conn)) {
+                    echo "Status update successful.";
+                } else {
+                    echo "Status update failed.";
+                }
+                } else {  
+                    $response['error'] = true;   
+                    $response['message'] = 'bad data';  
+                }
+            }
+            break;
+            case 'sms':
+                {
+                    if ($data) {
+                        // Retrieve values from $data
+                        $recipientWAID = $data['recipientWAID'];
+            
+                        // Retrieve selectedAppID from $data
+                        $selectedAppID = $data['selectedAppID'];
+                        $responseMessage = $data['responseMessage'];
+            
+                        // Fetch the Token from the database based on selectedAppID
+                        $fetchTokenQuery = "SELECT Token FROM whatsapp WHERE selectedAppID = '$selectedAppID'";
+                        $tokenResult = mysqli_query($conn, $fetchTokenQuery);
+            
+                        if ($tokenResult && mysqli_num_rows($tokenResult) > 0) {
+                            $tokenData = mysqli_fetch_assoc($tokenResult);
+                            $Token = $tokenData['Token'];
+            
+                            // Now you have $Token, $responseMessage, and $recipientWAID
+                            sendBotResponse($Token, $responseMessage, $recipientWAID);
+                        } else {
+                            // Handle the case when no Token is found
+                            echo "No Token found for selectedAppID: $selectedAppID";
+                        }
+                    }
+                }
+                break;
+            
+                case 'sms':
+                    {
+                        if ($data) {
+                            // Retrieve values from $data
+                            $recipientWAID = $data['recipientWAID'];
+                
+                            // Retrieve selectedAppID from $data
+                            $selectedAppID = $data['selectedAppID'];
+                            $responseMessage = $data['responseMessage'];
+                
+                            // Fetch the Token from the database based on selectedAppID
+                            $fetchTokenQuery = "SELECT Token FROM whatsapp WHERE selectedAppID = '$selectedAppID'";
+                            $tokenResult = mysqli_query($conn, $fetchTokenQuery);
+                
+                            if ($tokenResult && mysqli_num_rows($tokenResult) > 0) {
+                                $tokenData = mysqli_fetch_assoc($tokenResult);
+                                $Token = $tokenData['Token'];
+                
+                                // Now you have $Token, $responseMessage, and $recipientWAID
+                                sendBotResponse($Token, $responseMessage, $recipientWAID);
+                            } else {
+                                // Handle the case when no Token is found
+                                echo "No Token found for selectedAppID: $selectedAppID";
+                            }
+                        }
+                    }
+                    break;
 
             case 'mail':
                 {
@@ -100,4 +189,51 @@ try {
 function customError($errno, $errstr) {
     echo "<b>Error:</b> [$errno] $errstr";
 }
+function updateTicketStatus($ticketID, $newStatus, $conn) {
+    // Sanitize input to prevent SQL injection
+    $ticketID = mysqli_real_escape_string($conn, $ticketID);
+    $newStatus = mysqli_real_escape_string($conn, $newStatus);
+
+    // Update the ticket status with the provided status for the given ticket ID
+    $updateQuery = "UPDATE ticket SET status = '$newStatus' WHERE tid = '$ticketID'";
+    echo $updateQuery;
+    $result = mysqli_query($conn, $updateQuery);
+
+    if ($result) {
+        // The update was successful
+        // Log the operation, for example, by writing to a log file
+        $logMessage = "Ticket with ID '$ticketID' updated with status '$newStatus'.";
+        file_put_contents("update_ticket_status_log.txt", $logMessage . PHP_EOL, FILE_APPEND);
+
+        return true; // Return true to indicate success
+    } else {
+        // The update failed
+        return false; // Return false to indicate failure
+    }
+}
+
+function updateTicketWithTID($tid, $recipientWAID, $conn) {
+    // Sanitize input to prevent SQL injection
+    $tid = mysqli_real_escape_string($conn, $tid);
+    $recipientWAID = mysqli_real_escape_string($conn, $recipientWAID);
+
+    // Update the ticket with the provided TID for the given contact
+    $closeTicketQuery = "UPDATE ticket SET tid = '$tid' WHERE contact = '$recipientWAID'";
+    $result = mysqli_query($conn, $closeTicketQuery);
+
+    if ($result) {
+        // The update was successful
+        // Log the operation, for example, by writing to a log file
+        $logMessage = "Ticket with TID '$tid' updated for contact '$recipientWAID'.";
+        file_put_contents("update_ticket_log.txt", $logMessage . PHP_EOL, FILE_APPEND);
+        
+        return true; // Return true to indicate success
+    } else {
+        // The update failed
+        return false; // Return false to indicate failure
+    }
+}
+
+
+
 ?>

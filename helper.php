@@ -397,6 +397,7 @@ function createTicket($Token, $contact, $displayName, $mQuery, $mData, $path1,$m
 //       }
 // }
 function sendBotResponse( $token, $message, $recipientWAID, $code = 1, $userData = []) {
+    echo 'send';
     global $conn;
     $version = 'v17.0';
     $phoneNumberID = '118868224638325';

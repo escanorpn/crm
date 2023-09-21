@@ -6,9 +6,10 @@ function handleCommonGreetings($Token, $messageText, $recipientWAID, $selectedAp
     global $conn;
     $commonGreetings = ['hi', 'hello', 'sasa']; // Add more common greetings as needed
     // Ticket is open
-    $checkTicketQuery = "SELECT * FROM ticket WHERE contact = '$recipientWAID' AND  status = 'open' LIMIT 1";
+    $checkTicketQuery = "SELECT * FROM ticket WHERE contact = '$recipientWAID' AND selectedAppID = '$selectedAppID' AND  status = 'open' LIMIT 1";
     $result = mysqli_query($conn, $checkTicketQuery);
 
+  
     if ($result && mysqli_num_rows($result) > 0) {
         $ticketData = mysqli_fetch_assoc($result);
        
@@ -49,7 +50,7 @@ function handleCommonGreetings($Token, $messageText, $recipientWAID, $selectedAp
             createChat($Token,$recipientWAID, $profileName,$messages,$mData,$path, $messages, $ticketData);
             // Update the last message in the database
         }
-            }else{
+    }else{
                 if ($messageText === '4') {
                     // If the user responds with '4', set the ticket status to 'closed'
                     $closeTicketQuery = "UPDATE ticket SET status = 'closed' WHERE contact = '$recipientWAID'";
@@ -131,7 +132,7 @@ function handleMenuOptions($Token, $messageText, $recipientWAID, $selectedAppID,
 
             // Process the messages as needed
             // handleTicketCreation($Token, $messages, $recipientWAID, $selectedAppID, $profileName);
-            createTicket($Token,$recipientWAID, $profileName,$messages,$mData,$path, $messages);
+            createTicket($Token,$recipientWAID, $profileName,$messages,$mData,$path, $messages,$selectedAppID);
             // Update the last message in the database
             }
         } else {
@@ -237,7 +238,7 @@ function createChat($Token, $contact, $displayName, $mQuery, $mData, $path1,$mes
     echo "chat sent";
 }
 
-function createTicket($Token, $contact, $displayName, $mQuery, $mData, $path1,$message)
+function createTicket($Token, $contact, $displayName, $mQuery, $mData, $path1,$message,$selectedAppID)
 {
    
     global $conn;
@@ -248,7 +249,7 @@ function createTicket($Token, $contact, $displayName, $mQuery, $mData, $path1,$m
 
     $ck=0;
     // Check if a ticket with the given contact already exists
-    $checkTicketQuery = "SELECT * FROM ticket WHERE contact = '$contact' LIMIT 1";
+    $checkTicketQuery = "SELECT * FROM ticket WHERE contact = '$contact' AND selectedAppID='$selectedAppID' LIMIT 1";
     $result = mysqli_query($conn, $checkTicketQuery);
 
     if ($result && mysqli_num_rows($result) > 0) {
@@ -328,7 +329,7 @@ function createTicket($Token, $contact, $displayName, $mQuery, $mData, $path1,$m
         sendBotResponse($Token, $confirmationMessage, $contact);
         
          // Create a new ticket in the database with status 'open'
-         $insertTicketQuery = "INSERT INTO ticket (contact,message, status, createdAt) VALUES ( '$contact','$message', 'open', NOW())";
+         $insertTicketQuery = "INSERT INTO ticket (contact,message, status,selectedAppID, createdAt) VALUES ( '$contact','$message', 'open','$selectedAppID', NOW())";
          echo $insertTicketQuery;
          mysqli_query($conn, $insertTicketQuery);
     }
@@ -336,66 +337,6 @@ function createTicket($Token, $contact, $displayName, $mQuery, $mData, $path1,$m
     }
 }
 
-
-// function createTicket($Token, $contact, $displayName,$mQuery, $mData,$path){
-//     global $conn;
-//     $path=$path.'/tickets';
-//     $secret = My_SECRETE;
-//     $curl = curl_init();
-//     $tUrl= TURL;
-
-//     $payload = [
-//         "path" => $path,
-//         "data" => $mData // Use the previously defined $mdata array here
-//     ];
-    
-//     // Use the $mdata array in json_encode
-//     $jsonData = json_encode($payload);
-
-//     // echo $secret . PHP_EOL;
-//     // echo $tUrl . PHP_EOL;
-//     // echo $path . PHP_EOL;
-//     // echo $jsonData . PHP_EOL;
-    
-
-//     // Define the cURL options
-//     curl_setopt_array($curl, array(
-//         CURLOPT_URL => $tUrl,
-//         CURLOPT_RETURNTRANSFER => true,
-//         CURLOPT_ENCODING => '',
-//         CURLOPT_MAXREDIRS => 10,
-//         CURLOPT_TIMEOUT => 0,
-//         CURLOPT_FOLLOWLOCATION => true,
-//         CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-//         CURLOPT_CUSTOMREQUEST => 'POST',
-//         CURLOPT_POSTFIELDS => $jsonData, // Use $jsonData here
-//         CURLOPT_HTTPHEADER => array(
-//           'Content-Type: application/json',
-//           "Authorization: Bearer $secret"
-//         ),
-//       ));
-//       // Execute the cURL request
-//       $response = curl_exec($curl);
-      
-//       // Check for errors and handle the response as needed
-//       if (curl_errno($curl)) {
-      
-//             echo 'Curl error: ' . curl_error($curl);
-//             // Ticket creation succeeded
-//                // Ticket creation failed
-//                $errorMessage = 'An error occurred while creating your ticket. Please try again later.';
-//                sendBotResponse($Token, $errorMessage, $contact);
-       
-//         } else {
-//             $confirmationMessage = 'Your ticket has been created. Thank you for your query.';
-//             echo json_encode(array('$path' => $path));
-//             echo json_encode(array('$tUrl' => $tUrl));
-           
-//             sendBotResponse($Token, $confirmationMessage, $contact);
-         
-        
-//       }
-// }
 function sendBotResponse( $token, $message, $recipientWAID, $code = 1, $userData = []) {
     echo 'send';
     global $conn;

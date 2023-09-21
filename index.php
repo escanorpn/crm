@@ -7,7 +7,6 @@ $response = array();
 // Handle POST request to create or update data
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Parse JSON data from the request body
-
     // Extract data fields from the JSON data
     $selectedAppID = isset($_GET['metad']) ? $_GET['metad'] : null;
  

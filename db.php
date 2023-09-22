@@ -9,7 +9,9 @@ ini_set('display_errors', 1);
 define('My_SECRETE', 'aX12MmhK2RlFLQcOvfhSaSj8Plv2hJBJ3TTEljWihgtA000YGeduu2rt016mwtLBbty8wbUgBjeyL7FtdPPNpkycTGbW022qZNmS');
 define('TURL', 'https://us-central1-keja-a108d.cloudfunctions.net/addPackage');
 define('CHATURL', 'https://us-central1-keja-a108d.cloudfunctions.net/addChat');
-		
+define('APPID', 'https://us-central1-keja-a108d.cloudfunctions.net/checkAppById');
+// define('APPID', 'http://127.0.0.1:5001/keja-a108d/us-central1/checkAppById');
+
 		$servername="localhost";
 		$username="lmglobal_lmglobal";
 		$password="lmglobal_lmglobal";

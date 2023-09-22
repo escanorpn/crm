@@ -6,8 +6,7 @@ $response = array();
 set_error_handler("customError");
 
 if (isset($_GET['apicall'])) {  
-    switch ($_GET['apicall']) {
-        
+    switch ($_GET['apicall']) { 
         case 'whatsapp':
            
             if ($data) {
@@ -37,41 +36,6 @@ if (isset($_GET['apicall'])) {
                     http_response_code(200);
                     $response['message'] = "Validation data saved successfully";
                     $response['query'] = $query; // Store the executed SQL query in the response
-                } else {
-                    http_response_code(500);
-                    $response['message'] = "Error saving validation data: " . $conn->error;
-                    $response['query'] = $query; // Store the executed SQL query in the response even in case of an error
-                }
-            }
-            break; 
-        case 'whatsapp1':
-           
-            if ($data) {
-                $response['data'] = $data;
-                
-                // Extract data fields from the JSON data
-                $token = $data['Token'];
-                $phoneNumberId = $data['Phone-Number-ID'];
-                $version = $data['Version'];
-                $status = $data['status'];
-                $phoneNumber = $data['phoneNumber'];
-                $selectedAppID = $data['selectedAppID'];
-                $path = $data['path'];
-                
-                $response['selectedAppID'] = $selectedAppID;
-                
-                // Prepare the SQL query with values
-                $query = "INSERT INTO whatsapp (Token, phoneNumberId, Version, status, PhoneNumber, path, selectedAppID) 
-                          VALUES ('$token', '$phoneNumberId', '$version', '$status', '$phoneNumber', '$path', '$selectedAppID') 
-                          ON DUPLICATE KEY UPDATE 
-                          Token=VALUES(Token), phoneNumberId=VALUES(phoneNumberId), 
-                          Version=VALUES(Version), status=VALUES(status), 
-                          PhoneNumber=VALUES(PhoneNumber), path=VALUES(path), selectedAppID=VALUES(selectedAppID)";
-                
-                if ($conn->query($query)) {
-                    http_response_code(200);
-                    $response['message'] = "Validation data saved successfully";
-                    // $response['query'] = $query; // Store the executed SQL query in the response
                 } else {
                     http_response_code(500);
                     $response['message'] = "Error saving validation data: " . $conn->error;

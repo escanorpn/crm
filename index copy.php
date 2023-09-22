@@ -1,21 +1,41 @@
 <?php
 require_once 'cors.php';  
 require_once 'db.php';  
-require_once 'helper.php'; 
-require_once 'config.php'; 
+require_once 'helper.php';  
 $response = array();  
 
 // Handle POST request to create or update data
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Parse JSON data from the request body
     // Extract data fields from the JSON data
-   
+    $selectedAppID = isset($_GET['metad']) ? $_GET['metad'] : null;
  
     $entry = $data['entry'][0];
     $firstChange = $entry['changes'][0];
     $value = $firstChange['value'];
 
     
+    // Log the request details and data to a file
+    $logMessage = "Received POST request with selectedAppID : $selectedAppID \n";
+    $logMessage .= "Data: " . json_encode($data) . "\n"; // Include the $data variable
+    $logMessage .= "Variable selectedAppID : $selectedAppID \n"; // Include the $selectedAppID  variable
+    
+    // Specify the log file path
+    $logFilePath = 'log.txt';
+    
+    // Open the log file for appending
+    $logFile = fopen($logFilePath, 'a');
+    
+    if ($logFile) {
+        // Write the log message to the file
+        fwrite($logFile, $logMessage);
+        
+        // Close the log file
+        fclose($logFile);
+    } else {
+        // Handle any errors that occur when opening the log file
+        error_log("Error opening log file $logFilePath");
+    }
 
     
     if ($data['object'] === 'whatsapp_business_account' && isset($data['entry']) && count($data['entry']) > 0) {
@@ -45,53 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $recipientWAID = $contacts[0]['wa_id'];
                         }
 
-                        $selectedAppID = retrieveAppId($recipientWAID, $conn);
-
-                        // Check if the retrieved selectedAppID is not null
-                        echo json_encode(array('selectedAppID' => $selectedAppID));    
-                    // Check if the retrieved selectedAppID is not null
-                    if ($selectedAppID == null) {
-                        // Call the retrieveAppdata function to get the appId
-                        $appData = retrieveAppdata($messages);
-                        
-                        echo json_encode(array('appId' => $messages,'selectedAppID' => $selectedAppID,'appData' => $appData));
-
-                        if (!$appData['success']) {
-                            // If appData is not available, send a response to request the business code
-                            $responseMessage = "Hi {$profileName}, Please provide the business Code";
-                            sendBotResponse($Token, $responseMessage, $recipientWAID);
-                        } else {
-                              // If appData is not available, send a response to request the business code
-                            
-                            // Insert appId as selectedAppID, $recipientWAID as rno, status=1, organizationName=appData['name'] into bots_data
-                            $appId = $selectedAppID; // Replace with the actual key in $appData
-                            $organizationName = $appData['appName']; // Replace with the actual key in $appData
-
-                            $responseMessage = "I'm,an AI assistant from {$organizationName}, how may i be of assistance?";
-                            sendBotResponse($Token, $responseMessage, $recipientWAID);
-                            // if (preg_match('/^-/', $string)) {
-                            //     echo "String starts with a special character.";
-                            // } else {
-                            //     echo "String starts with a normal word.";
-                            // }
-                            // Prepare and execute the SQL query to insert the data
-                            $updateSql = "UPDATE bots_data
-                                SET status = 1,selectedAppID = '$messages', organizationName = '$organizationName'
-                                WHERE rno = '$recipientWAID'";                 
-                          echo $updateSql;
-
-                            if ($conn->query($updateSql) === TRUE) {
-                                // Data inserted successfully
-                                // You can send a confirmation response if needed
-                            } else {
-                                // Handle the case where data insertion failed
-                                // You can send an error response or log the error
-                                echo "Error updating data into bots_data: " . $conn->error;
-                            }
-                        }
-                        return;
-                    }
-                        
                         // Query to retrieve data from the database
                         $sql = "SELECT verificationCode, status, Token FROM whatsapp WHERE selectedAppID = '$selectedAppID'";
                         $result = $conn->query($sql);
@@ -180,87 +153,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         }
     }
-function retrieveAppId($recipientWAID, $conn) {
-    // Implement your logic to retrieve the selectedAppID
-    // For example, you can query the database based on $recipientWAID
-    $sql = "SELECT selectedAppID FROM bots_data WHERE rno = '$recipientWAID'";
-    $result = $conn->query($sql);
 
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            return $row['selectedAppID'];
-        }
-    } else {
-        // If no selectedAppID is found, you can add a new record and return its value
-        $insertSql = "INSERT INTO bots_data (rno) VALUES ('$recipientWAID' )";
-        
-        if ($conn->query($insertSql) === TRUE) {
-            return null;
-        } else {
-            // Handle the case where insertion fails
-            return null;
-        }
-    }
-}
-
-    
    
 
-    function retrieveAppdata($appId) {
-        global $conn;
-        
-        $APPID = APPID;
-        $secret = My_SECRETE; // Replace My_SECRETE with your actual secret
-        $curl = curl_init();
-        $APPDURL = $APPID ; // Replace with your AppDURL
-    
-        // Define the payload data
-        $payload = [
-            "appId" => $appId
-        ];
-    
-        // Encode the payload as JSON
-        $jsonData = json_encode($payload);
-    
-        // Define cURL options
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => $APPDURL,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => $jsonData,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                "Authorization: Bearer $secret"
-            ),
-        ));
-    
-        // Execute the cURL request
-        $response = curl_exec($curl);
-    
-        // Check for cURL errors and handle the response as needed
-        if (curl_errno($curl)) {
-            echo 'Curl error: ' . curl_error($curl);
-            // Handle the error as required
-        } else {
-            // Process the response data (e.g., JSON parsing)
-            $responseData = json_decode($response, true);
-            
-            // You can now work with $responseData to extract the necessary information
-            // For example, $responseData['some_key'] to access a specific value
-            
-            // Return the response data or perform further processing
-            return $responseData;
-        }
-    
-        // Close the cURL session
-        curl_close($curl);
-    }
-     
+  
+
+       
 
 
 // Handle GET request

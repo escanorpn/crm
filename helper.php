@@ -146,6 +146,21 @@ function handleMenuOptions($Token, $messageText, $recipientWAID, $selectedAppID,
     } elseif ($messageText === '3') {
         $responseMessage = "Okay, thank you and have a nice day!";
         sendBotResponse($Token, $responseMessage, $recipientWAID);
+    } elseif ($messageText === '5') {
+         // Prepare and execute the SQL query to insert the data
+         $updateSql = "UPDATE bots_data
+         SET selectedAppID = ''
+         WHERE rno = '$recipientWAID'";                 
+   echo $updateSql;
+
+     if ($conn->query($updateSql) === TRUE) {
+        $responseMessage = "Okay, please eneter business code!";
+     } else {
+        $responseMessage = "There was an issue please try again later!";
+         echo "Error updating data into bots_data: " . $conn->error;
+     }
+        
+        sendBotResponse($Token, $responseMessage, $recipientWAID);
     } elseif ($messageText === '4') {
         // If the user responds with '4', set the ticket status to 'closed'
         $closeTicketQuery = "UPDATE ticket SET status = 'closed' WHERE contact = '$recipientWAID'";
@@ -156,10 +171,18 @@ function handleMenuOptions($Token, $messageText, $recipientWAID, $selectedAppID,
 
     }
     else {
-       
         $responseMessage = "Would you like me to log the issue\n*$messageText*?\n1: Yes\n2: Enter new Query\n3: Never mind";
+        $sql = "SELECT selectedAppID,organizationName FROM bots_data WHERE rno = '$recipientWAID' LIMIT 1";
+        $result = $conn->query($sql);
+        if ($result && mysqli_num_rows($result) > 0) {
+            $bottData = mysqli_fetch_assoc($result);
+            $orgName= $bottData['organizationName'];
+            $responseMessage = "Would you like me to log the issue\n*$messageText* \n to *$orgName*?\n1: Yes\n2: Enter new Query\n3: Never mind \n5: Choose different company";
+        }
+       
         sendBotResponse($Token, $responseMessage, $recipientWAID);
-        echo $responseMessage;
+     
+        echo json_encode(array('message' => $responseMessage,'selectedAppID' => $selectedAppID));
     }
 }
 

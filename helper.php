@@ -188,7 +188,7 @@ function handleMenuOptions($Token, $messageText, $recipientWAID, $selectedAppID,
         if ($result && mysqli_num_rows($result) > 0) {
             $bottData = mysqli_fetch_assoc($result);
             $orgName= $bottData['organizationName'];
-            $responseMessage = "Would you like me to log the issue\n*$messageText* \n to *$orgName*?\n1: Yes\n2: Enter new Query\n3: Never mind \n5: Choose different company";
+            $responseMessage = "Would you like me to log the issue\n*$messageText* \n to *$orgName*?\n1: Yes\n2: Enter new Query\n3: Never mind \n5: Choose different organization";
         }
        
         sendBotResponse($Token, $responseMessage, $recipientWAID);

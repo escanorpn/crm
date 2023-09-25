@@ -171,7 +171,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             // Handle case where no data is found in the database
                     
                             // Send response to the client
-                            $responseMessage = "That's weird, the organization was not found in my database";
+                            $updateSql = "UPDATE bots_data SET selectedAppID = ''WHERE rno = '$recipientWAID'";                 
+                          echo $updateSql;
+
+                            if ($conn->query($updateSql) === TRUE) {
+                            } else {
+                                echo "Error updating data into bots_data: " . $conn->error;
+                            }
+                            $responseMessage = "That's weird, the organization was not found in my database \n *Enter* 5: to Choose different organization";
                     
                             sendBotResponse($Token, $responseMessage, $recipientWAID);
                             echo json_encode(array('message' => 'No data found in the database.'.$sql));

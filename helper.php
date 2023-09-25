@@ -55,7 +55,7 @@ function handleCommonGreetings($Token, $messageText, $recipientWAID, $selectedAp
                 $bottData = mysqli_fetch_assoc($result);
                 $status= $bottData['status'];
                 $orgName= $bottData['organizationName'];
-                if($status==2){
+                if($status==3){
                 $confirmationMessage = " *$orgName* Let me get a human to respond to your ticket. Respond with '4' to close the ticket.";
                 sendBotResponse($Token, $confirmationMessage, $recipientWAID);
                 }

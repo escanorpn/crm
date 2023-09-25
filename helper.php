@@ -269,7 +269,7 @@ function createChat($Token, $contact, $displayName, $mQuery, $mData, $path1,$mes
         $errorMessage = 'An error occurred while procesing your input. Please try again later.';
         sendBotResponse($Token, $errorMessage, $contact);
     }else{
-        $updateStatusQuery = "UPDATE bots_data SET status = 3 WHERE selectedAppID = '$selectedAppID' AND rno='$contact";
+        $updateStatusQuery = "UPDATE bots_data SET status = 3 WHERE selectedAppID = '$selectedAppID' AND rno='$contact' ";
         $updateStatusResult = mysqli_query($conn, $updateStatusQuery);
 
         if ($updateStatusResult) {

@@ -56,8 +56,19 @@ function handleCommonGreetings($Token, $messageText, $recipientWAID, $selectedAp
                 $status= $bottData['status'];
                 $orgName= $bottData['organizationName'];
                 if($status==3){
-                $confirmationMessage = " *$orgName* Let me get a human to respond to your ticket. Respond with '4' to close the ticket.";
-                sendBotResponse($Token, $confirmationMessage, $recipientWAID);
+                    if ($messageText === '4') {
+                        // If the user responds with '4', set the ticket status to 'closed'
+                        $closeTicketQuery = "UPDATE ticket SET status = 'closed' WHERE contact = '$recipientWAID'";
+                        mysqli_query($conn, $closeTicketQuery);
+                        $confirmationMessage = "Previous tickets closed.";
+                        sendBotResponse($Token, $confirmationMessage, $recipientWAID);
+                        return;
+                
+                    }else{
+
+                        $confirmationMessage = " *$orgName*: \n Let me get a human to respond to your ticket. Respond with '4' to close the ticket.";
+                        sendBotResponse($Token, $confirmationMessage, $recipientWAID);
+                    }
                 }
             }
         }

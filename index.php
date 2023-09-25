@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         if (!$appData['success']) {
                             // If appData is not available, send a response to request the business code
-                            $responseMessage = "Hi {$profileName}, Please provide the business Code";
+                            $responseMessage = "Hi {$profileName}, Please provide a valid organization Code";
                             sendBotResponse($Token, $responseMessage, $recipientWAID);
                         } else {
                               // If appData is not available, send a response to request the business code
@@ -171,6 +171,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             // Handle case where no data is found in the database
                     
                             // Send response to the client
+                            $responseMessage = "That's weird, the organization was not found in my database";
+                    
+                            sendBotResponse($Token, $responseMessage, $recipientWAID);
                             echo json_encode(array('message' => 'No data found in the database.'.$sql));
                         }
                         }

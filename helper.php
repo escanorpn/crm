@@ -14,7 +14,7 @@ function handleCommonGreetings($Token, $messageText, $recipientWAID, $selectedAp
         $ticketData = mysqli_fetch_assoc($result);
        
         if ($ticketData['tid']!=="") {
-            echo $ticketData['tid'] . "\n";
+            // echo $ticketData['tid'] . "\n";
       
         // echo $checkTicketQuery. "\n";
           // Retrieve path to ticket is open appid-> user number
@@ -47,8 +47,19 @@ function handleCommonGreetings($Token, $messageText, $recipientWAID, $selectedAp
      
 
            echo 'sms sent';
-            createChat($Token,$recipientWAID, $profileName,$messages,$mData,$path, $messages, $ticketData);
-            // Update the last message in the database
+
+            createChat($Token,$recipientWAID, $profileName,$messages,$mData,$path, $messages, $ticketData,$selectedAppID);
+            $sql = "SELECT status,organizationName FROM bots_data WHERE rno = '$recipientWAID' AND selectedAppID = '$selectedAppID' LIMIT 1";
+            $result = $conn->query($sql);
+            if ($result && mysqli_num_rows($result) > 0) {
+                $bottData = mysqli_fetch_assoc($result);
+                $status= $bottData['status'];
+                $orgName= $bottData['organizationName'];
+                if($status==2){
+                $confirmationMessage = " *$orgName* Let me get a human to respond to your ticket. Respond with '4' to close the ticket.";
+                sendBotResponse($Token, $confirmationMessage, $recipientWAID);
+                }
+            }
         }
     }else{
                 if ($messageText === '4') {
@@ -211,7 +222,7 @@ function handleTicketCreation( $Token, $messageText, $recipientWAID, $selectedAp
     // Close the prepared statement
     $stmt->close();
 }
-function createChat($Token, $contact, $displayName, $mQuery, $mData, $path1,$message,  $ticketData)
+function createChat($Token, $contact, $displayName, $mQuery, $mData, $path1,$message,  $ticketData,$selectedAppID)
 {
    global $conn;
     $secret = My_SECRETE;
@@ -257,6 +268,16 @@ function createChat($Token, $contact, $displayName, $mQuery, $mData, $path1,$mes
         // Ticket creation failed
         $errorMessage = 'An error occurred while procesing your input. Please try again later.';
         sendBotResponse($Token, $errorMessage, $contact);
+    }else{
+        $updateStatusQuery = "UPDATE bots_data SET status = 3 WHERE selectedAppID = '$selectedAppID' AND rno='$contact";
+        $updateStatusResult = mysqli_query($conn, $updateStatusQuery);
+
+        if ($updateStatusResult) {
+            echo "Status updated successfully for selectedAppID: $selectedAppID";
+        } else {
+            // Handle the case when the status update fails
+            echo "Failed to update status for selectedAppID: $selectedAppID";
+        }
     } 
     echo "chat sent";
 }
@@ -369,7 +390,7 @@ function sendBotResponse( $token, $message, $recipientWAID, $code = 1, $userData
     $url = "https://graph.facebook.com/$version/$phoneNumberID/messages";
     $curl = curl_init();
 // Define the cURL options
-curl_setopt_array($curl, array(
+    curl_setopt_array($curl, array(
     CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => '',

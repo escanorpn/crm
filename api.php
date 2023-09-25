@@ -134,6 +134,17 @@ if (isset($_GET['apicall'])) {
             
                             // Now you have $Token, $responseMessage, and $recipientWAID
                             sendBotResponse($Token, $responseMessage, $recipientWAID);
+                                  // Update the 'status' field in the 'bots_data' table
+                                    $updateStatusQuery = "UPDATE bots_data SET status = 2 WHERE selectedAppID = '$selectedAppID' AND rno='$recipientWAID";
+                                    $updateStatusResult = mysqli_query($conn, $updateStatusQuery);
+
+                                    if ($updateStatusResult) {
+                                        echo "Status updated successfully for selectedAppID: $selectedAppID";
+                                    } else {
+                                        // Handle the case when the status update fails
+                                        echo "Failed to update status for selectedAppID: $selectedAppID";
+                                    }
+
                         } else {
                             // Handle the case when no Token is found
                             echo "No Token found for selectedAppID: $selectedAppID";
